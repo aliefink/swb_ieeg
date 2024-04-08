@@ -1,8 +1,7 @@
 
 *.m
-scripts/single_subj_preprocess/.ipynb_checkpoints/
-scripts/single_subj_preprocess/not_active/.ipynb_checkpoints/
 scripts/.DS_Store
-scripts/single_subj_preprocess/.DS_Store
 .DS_Store
-scripts/single_subj_epoching/.ipynb_checkpoints/
+scripts/bp_preprocess/mssm/.ipynb_checkpoints/
+scripts/bp_preprocess/ucd/.ipynb_checkpoints/
+scripts/analysis_notebooks/.ipynb_checkpoints/
