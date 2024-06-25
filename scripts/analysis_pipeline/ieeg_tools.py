@@ -1,29 +1,83 @@
 import numpy as np
 import pandas as pd 
-import statsmodels.api as smf
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+def mixed_effects_ftest_ttest(stat_fit,stattest = 'both'):
+    
+    '''
+    input to t_test is hypothesis = string of concatenated tuples of hypotheses to test (sig diff from zero?)
+    # this only works for ols i think! - hypothesis = (',').join(['('+var+'=0)' for var in ttest_vars])
+
+    '''
+    # create identity matrix from fit.k_fe num fixed effects params
+    if stattest == 'both':
+        # run one sample t tests for all fixed effects regressors 
+        R_ttest = np.identity(stat_fit.k_fe)[1:,:]
+        ttest = stat_fit.t_test(R_ttest,use_t=True)
+        ftest = stat_fit.f_test(np.identity(len(stat_fit.params))[1:,:])
+
+    return (ttest.summary_frame(),ftest)
+# https://www.statsmodels.org/dev/generated/statsmodels.discrete.discrete_model.LogitResults.f_test.html#statsmodels.discrete.discrete_model.LogitResults.f_test
 
 
 
-def fit_mixed_model(df, regressor_vars, outcome_var, rand_eff_var):
+def fit_mixed_model(df, regressor_vars, outcome_var, rand_eff_var,reml=True):
     # define formula, random effects formula
     formula    = (' + ').join(regressor_vars)
     re_formula = formula
     formula    = f'{outcome_var} ~ 1 + {formula}'
-    # run model
-    model_fit = smf.mixedlm(
-        formula = formula, re_formula = re_formula,
-        data = df, groups=df[rand_eff_var], missing='drop').fit()
-    
-#     model_bic = bic(model_fit)
-    return model_fit
+    # fit model
+    return smf.mixedlm(formula = formula, re_formula = re_formula,
+        data = df, groups=df[rand_eff_var], missing='drop').fit(reml=reml)
 
-def bic(model_fit):
-    K = len(model_fit.params)
-    n = len(model_fit.resid)
-    ll = model_fit.llf
-    bic = (K*np.log(n)) - 2*ll
+def compute_marginal_rsq(model_fit):
+    # https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/j.2041-210x.2012.00261.x
+    fe_var    = model_fit.params['Group Var']
+    group_var = np.sum([model_fit.params[param] for param in model_fit.params.index.tolist() if param[-3:] == 'Var'])
+    resid_var = np.var(model_fit.resid)
+    rsq = fe_var/(group_var + resid_var)
+    return rsq
     
-    return bic
+
+def vif_scores(df, regressor_vars):
+    
+    cov_data_dict = {f'{reg}':[] for reg in regressor_vars}
+    
+    # check if data is categorical
+    for reg in regressor_vars: 
+        if pd.api.types.is_numeric_dtype(df[reg]):
+            cov_data_dict[reg] = df[reg]
+        else: 
+            # factorize categorical data into numeric dummy variables 
+            cov_data_dict[reg] = pd.factorize(df[reg])[0]
+    
+    vif_df = pd.DataFrame(cov_data_dict)
+
+
+    vif_df = vif_df.astype(float)
+    vif_df = vif_df.dropna()
+
+
+    vif_data = pd.DataFrame() 
+    vif_data["feature"] = vif_df.columns 
+
+    # calculating VIF for each feature 
+    vif_data["VIF"] = [variance_inflation_factor(vif_df.values, i) 
+                              for i in range(len(vif_df.columns))] 
+    return vif_data
+
+def norm_zscore(reg_array):
+    return (reg_array-np.mean(reg_array))/(2*np.std(reg_array))
+
+# def bic(lmm_fit):
+#     K = len(lmm_fit.params-1) #number of fixed effects - intercept  
+#     n = len(lmm_fit.resid)
+#     ll = lmm_fit.llf
+#     bic = (K*np.log(n)) - 2*ll
+    
+#     return bic
 
 
 def compute_cpd(full_model_fit,reduced_model_fit):
