@@ -3,10 +3,17 @@ import pandas as pd
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 from statsmodels.stats.outliers_influence import variance_inflation_factor
+from statsmodels.regression.mixed_linear_model import MixedLM 
+
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
 import patsy
 from statsmodels.api import OLS
 from scipy import stats
 from tqdm import tqdm
+# from statsmodels.regression.mixed_linear_model import MixedLM 
 
 ### from salman connectivity functions!
 # def find_nearest_value(array, value):
@@ -207,16 +214,17 @@ def mixed_effects_ftest_ttest(stat_fit,stattest = 'both'):
     return (ttest.summary_frame(),ftest)
 # https://www.statsmodels.org/dev/generated/statsmodels.discrete.discrete_model.LogitResults.f_test.html#statsmodels.discrete.discrete_model.LogitResults.f_test
 
-
-
-def fit_mixed_model(df, regressor_vars, rand_vars, outcome_var, rand_eff_var,reml=True):
+def fit_mixed_model(df, regressor_vars, random_vars, Y_var, RE_var,reml=True):
     # define formula, random effects formula
-    re_formula = (' + ').join(rand_vars) 
-    formula    = f'{outcome_var} ~ 1 +  {("+").join(regressor_vars)}'
-#     formula    = f'{outcome_var} ~ 1 + {formula}'
-    # fit model
-    return smf.mixedlm(formula = formula, re_formula = re_formula,
-        data = df, groups=df[rand_eff_var], missing='drop').fit(reml=reml)
+    re_formula = (' + ').join(random_vars) 
+    formula    = f'{Y_var} ~ 1 +  {(" + ").join(regressor_vars)}'
+    return smf.mixedlm(formula = formula, re_formula = re_formula, data = df, groups=df[RE_var], missing='drop').fit(reml=reml)
+
+# def fit_mixed_model(df, regressor_vars, random_vars, outcome_var, rand_eff_var,reml=True):
+#     # define formula, random effects formula
+#     re_formula = (' + ').join(random_vars) 
+#     formula    = f'{outcome_var} ~ 1 +  {(" + ").join(regressor_vars)}'
+#     return smf.mixedlm(formula = formula, re_formula = re_formula, data = df, groups=df[rand_eff_var], missing='drop').fit(reml=reml)
 
 def compute_marginal_rsq(model_fit):
     # https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/j.2041-210x.2012.00261.x

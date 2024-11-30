@@ -6,7 +6,7 @@ import seaborn as sns
 import os
 
 
-def plot_roi_model_results(model_results,x_var,y_var,ylabel=None,color = 'k',bar_order=None,figsize=(10,4),dpi=500,linewidth=1.5,
+def plot_roi_model_results(model_results,x_var,y_var,ylabel=None,color = 'k',bar_order=None,figsize=(10,4),dpi=400,linewidth=1.5,
                            size=6,sns_context="poster",save_fig=False,save_dir=None,fig_id=None):
     
     if save_fig:
@@ -19,7 +19,7 @@ def plot_roi_model_results(model_results,x_var,y_var,ylabel=None,color = 'k',bar
                 x = x_var,
                 y = y_var,
                 color = color,
-                saturation=0.8,
+                saturation=0.6,
                 order=bar_order,
                 errorbar=None) 
 
@@ -40,7 +40,7 @@ def plot_roi_model_results(model_results,x_var,y_var,ylabel=None,color = 'k',bar
     
     if save_fig: 
         plt.savefig(f'{save_dir}{fig_id}', format=fig_id.split('.')[-1], metadata=None,
-        bbox_inches=None, pad_inches=0.1,dpi=dpi,
+        bbox_inches='tight', pad_inches=0.1,dpi=dpi,
         facecolor='auto', edgecolor='auto',
         backend=None)
     

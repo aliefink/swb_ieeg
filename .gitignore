@@ -5,3 +5,5 @@ scripts/.DS_Store
 scripts/bp_preprocess/mssm/.ipynb_checkpoints/
 scripts/bp_preprocess/ucd/.ipynb_checkpoints/
 scripts/analysis_notebooks/.ipynb_checkpoints/
+scripts/analysis_pipeline/band_regressions/beta_coherence_results.ipynb
+scripts/analysis_pipeline/cpe_epochs/beta_coherence_results.ipynb
