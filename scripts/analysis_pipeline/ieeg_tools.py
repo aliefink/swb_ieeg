@@ -22,18 +22,15 @@ from tqdm import tqdm
 #     idx = (np.abs(array - value)).argmin()
 #     return array[idx], idx
 
-def run_individual_elec_regression(data,reg_formula,elec_col,main_var,n_permutations,plot=False):
+def run_individual_elec_regression(data,reg_formula,elec_col,n_permutations,plot=False):
     results_dict = {}
-    main_var_sig = []
     
     for elec in data[elec_col].unique().tolist():
         elec_data = data[data[elec_col] == elec]
         res = permutation_regression_zscore(elec_data,reg_formula,n_permutations=1000, plot_res=False)
-        if res.P_Value[main_var] <= 0.05:
-            main_var_sig.append(elec)
         results_dict[elec] = res
         
-    return results_dict, main_var_sig
+    return results_dict
     
 
 def single_elec_permutation_results(results_dict,data_df,save_vars):
@@ -64,7 +61,7 @@ def single_elec_permutation_results(results_dict,data_df,save_vars):
     return pd.concat(results_df).reset_index(drop=True) 
 
 
-def mixed_eff_results_df(mixed_model_fit,data_df,rand_eff_var='unique_reref_ch'):
+def mixed_eff_results_df(mixed_model_fit,data_df,rand_eff_var='unique_reref_ch',region_type='roi'):
     results_df = []
     
     # extract fixed effect param names and coefficient estimates from model 
@@ -92,7 +89,7 @@ def mixed_eff_results_df(mixed_model_fit,data_df,rand_eff_var='unique_reref_ch')
 
         info_dict = {f'{rand_eff_var}':var,
                                           'subj_id':var.split('_')[0],
-                                          'roi':data_df[data_df[rand_eff_var] == var].roi.unique()[0],
+                                          'region_type':data_df[data_df[rand_eff_var] == var][region_type].unique()[0],
                                           'bdi':data_df[data_df[rand_eff_var] == var].bdi.unique()[0]}
                      
         results_df.append(pd.DataFrame({**info_dict,**rand_dict},index=[0]) )            
@@ -105,41 +102,6 @@ def mixed_eff_results_df(mixed_model_fit,data_df,rand_eff_var='unique_reref_ch')
 #     return results_df
     return pd.concat(results_df).reset_index(drop=True) 
 
-
-# def mixed_eff_results_df(mixed_model_fit,data_df,rand_eff_var='unique_reref_ch'):
-#     results_df = []
-    
-#     # extract fixed effect param names and coefficient estimates from model 
-#     fe_params = [fe[2:].split(')')[0] if fe.endswith(']') else fe # remove 'C()[]' for categorical vars
-#                for fe in mixed_model_fit.fe_params.index.values.tolist()]        
-#     fe_coeffs = mixed_model_fit.fe_params.values
-#     # join into dictionary 
-#     fe_dict = {f'{key}':val for key,val in list(zip(fe_params,fe_coeffs))}
-
-    
-#     # extract random effects param names and coefficient estimates from model
-#     rand_vars = list(mixed_model_fit.random_effects.keys())
-    
-    
-#     for var in rand_vars:
-#         rand_params  = [p[2:].split(')')[0] if p.endswith(']') else p # remove 'C()[]' for categorical vars
-#                         for p in mixed_model_fit.random_effects[var].index.values.tolist()]
-#         rand_params  = [p if p != 'Group' else 'Intercept' for p in rand_params]
-#         raw_params   =  ['_'.join(['raw',p]) for p in rand_params]
-#         raw_coeffs   = mixed_model_fit.random_effects[var].values.tolist()
-#         rand_coeffs  = fe_coeffs + raw_coeffs
-        
-#         rand_dict = {f'{key}':val for key,val in list(zip((raw_params+rand_params),
-#                                                           (list(raw_coeffs)+list(rand_coeffs))))}     
-
-#         info_dict = {f'{rand_eff_var}':var,
-#                                           'subj_id':var.split('_')[0],
-#                                           'roi':data_df[data_df[rand_eff_var] == var].roi.unique()[0],
-#                                           'bdi':data_df[data_df[rand_eff_var] == var].bdi.unique()[0]}
-                     
-#         results_df.append(pd.DataFrame({**info_dict,**rand_dict},index=[0]) )            
-    
-#     return pd.concat(results_df).reset_index(drop=True) 
 
 def fit_permuted_model(y_permuted, X):
     return OLS(y_permuted, X).fit().params
